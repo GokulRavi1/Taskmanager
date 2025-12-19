@@ -28,7 +28,8 @@ export default function EditTaskPage({ params }: { params: Promise<{ id: string 
                         startTime: task.startTime || "",
                         endTime: task.endTime || "",
                         notes: task.notes || "",
-                        links: task.links || []
+                        links: task.links || [],
+                        category: task.category || "General"
                     });
                 } else {
                     console.error("Failed to fetch task");
