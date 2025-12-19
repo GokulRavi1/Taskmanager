@@ -1,16 +1,14 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { TaskForm, ITaskData } from '@/components/TaskForm';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-
 import { useSearchParams } from 'next/navigation';
-
 import { useTaskContext } from '@/context/TaskContext';
 
-export default function AddTaskPage() {
+function AddTaskContent() {
     const router = useRouter();
     const { refreshTasks } = useTaskContext();
     const searchParams = useSearchParams();
@@ -77,5 +75,13 @@ export default function AddTaskPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AddTaskPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-background p-12">Loading...</div>}>
+            <AddTaskContent />
+        </Suspense>
     );
 }
