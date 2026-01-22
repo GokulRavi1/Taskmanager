@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
 // Define a minimal Task interface for the context to avoid circular dependency issues
 // or duplication. Ideally imported from types.
@@ -34,7 +35,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(false);
     const [lastUpdate, setLastUpdate] = useState(0);
 
+    const { user } = useAuth();
+
     const fetchTasks = useCallback(async () => {
+        if (!user) return; // Don't fetch if not logged in
+
         setLoading(true);
         try {
             const res = await fetch('/api/tasks');
@@ -46,11 +51,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks, lastUpdate]);
+        if (user) {
+            fetchTasks();
+        } else {
+            setTasks([]); // Clear tasks on logout
+        }
+    }, [fetchTasks, lastUpdate, user]);
 
     const refreshTasks = useCallback(() => {
         setLastUpdate(Date.now());
