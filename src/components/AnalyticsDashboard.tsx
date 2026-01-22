@@ -40,9 +40,12 @@ export function AnalyticsDashboard() {
             // Note: Since we don't have completedAt, we use a proxy:
             // Tasks due on this day that are completed. 
             // Ideally we need a completedAt field. For now, we'll use "Scheduled Completed"
-            const scheduledCompletedCount = tasks.filter(t =>
-                t.date === dateStr && t.isCompleted
-            ).length;
+            const scheduledCompletedCount = tasks.filter(t => {
+                if (!t.date || !t.isCompleted) return false;
+                // Handle both ISO strings and potentially pre-formatted strings
+                const taskDate = typeof t.date === 'string' ? parseISO(t.date) : new Date(t.date);
+                return isSameDay(taskDate, day);
+            }).length;
 
             return {
                 date: format(day, 'MMM dd'),
