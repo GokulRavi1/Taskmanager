@@ -13,13 +13,13 @@ import { useTaskContext } from "@/context/TaskContext";
 
 export function AgentSidebar() {
     const { user } = useAuth();
-    const { tasks } = useTaskContext();
-    const [isOpen, setIsOpen] = useState(true); // Default open for visibility
+    const { tasks, refreshTasks } = useTaskContext();
+    const [isOpen, setIsOpen] = useState(true);
     const [activeTab, setActiveTab] = useState<'chat' | 'actions'>('chat');
 
     // Chat State
     const [messages, setMessages] = useState<{ role: 'user' | 'model', content: string }[]>([
-        { role: 'model', content: "Hi! I'm your AI Agent. How can I help you optimize your workflow today?" }
+        { role: 'model', content: "Hi! I'm your AI Agent. How can I help you optimize your workflow today? You can also say 'Schedule [task] for [date/time]' to create tasks!" }
     ]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -41,26 +41,48 @@ export function AgentSidebar() {
         setLoading(true);
 
         try {
-            // Context injection
-            const taskContext = JSON.stringify(tasks.slice(0, 20).map(t => ({
-                title: t.title,
-                status: t.isCompleted ? 'Done' : 'Pending',
-                priority: t.priority
-            })));
+            // Detect scheduling intent
+            const schedulingKeywords = /\b(schedule|create task|add task|remind me|book|plan|set up)\b/i;
+            const isSchedulingRequest = schedulingKeywords.test(text);
 
-            const res = await fetch('/api/ai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'chat',
-                    payload: `CONTEXT: ${taskContext}\n\nUSER REQUEST: ${text}`,
-                    history: messages
-                }),
-            });
+            if (isSchedulingRequest) {
+                // Call schedule-task endpoint
+                const res = await fetch('/api/ai/schedule-task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text }),
+                });
 
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-            setMessages(prev => [...prev, { role: 'model', content: data.result }]);
+                const data = await res.json();
+
+                if (data.success) {
+                    setMessages(prev => [...prev, { role: 'model', content: data.message }]);
+                    refreshTasks(); // Update the task list immediately
+                } else {
+                    setMessages(prev => [...prev, { role: 'model', content: data.message || data.error || "Failed to schedule task." }]);
+                }
+            } else {
+                // Regular chat flow
+                const taskContext = JSON.stringify(tasks.slice(0, 20).map(t => ({
+                    title: t.title,
+                    status: t.isCompleted ? 'Done' : 'Pending',
+                    priority: t.priority
+                })));
+
+                const res = await fetch('/api/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'chat',
+                        payload: `CONTEXT: ${taskContext}\n\nUSER REQUEST: ${text}`,
+                        history: messages
+                    }),
+                });
+
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                setMessages(prev => [...prev, { role: 'model', content: data.result }]);
+            }
         } catch (error) {
             console.error(error);
             setMessages(prev => [...prev, { role: 'model', content: "I encountered an error. Please try again." }]);

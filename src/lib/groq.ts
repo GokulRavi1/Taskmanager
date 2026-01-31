@@ -195,8 +195,9 @@ async function executeHuggingFaceCall(messages: any[], modelIndex = 0): Promise<
 }
 
 // --- MAIN EXECUTION STRATEGY ---
-async function executeGroqCall(messages: any[], model = GROQ_PRIMARY_MODEL): Promise<string> {
+export async function executeGroqCall(messages: any[], model = GROQ_PRIMARY_MODEL): Promise<string> {
   try {
+
     const completion = await groq.chat.completions.create({
       messages: messages,
       model: model,
@@ -243,35 +244,32 @@ export async function parseTaskFromNaturalLanguage(text: string) {
   const nextWeek = nextWeekDate.toISOString().split('T')[0];
 
   const prompt = `
-  You are an advanced AI Task Extractor. Your job is to convert unstructured text into structured JSON tasks.
+  You are an advanced AI Task Scheduler. Convert natural language into structured JSON tasks.
   
   CURRENT CONTEXT:
   - Today: ${today} (${now.toLocaleDateString('en-US', { weekday: 'long' })})
   - Tomorrow: ${tomorrow}
   - Next Week: ${nextWeek}
 
-  INPUT TEXT: "${text}"
+  INPUT: "${text}"
 
-  INSTRUCTIONS:
-  1. Extract distinct tasks from the input.
-  2. For each task, determine:
-     - "title": Concise, action-oriented title.
-     - "description": Any extra details, context, or links.
-     - "priority": Infer priority (High/Medium/Low) based on urgency words (e.g., "urgent", "asap", "important" = High). Default to "Medium".
-     - "effort": Estimate effort (Small/Medium/Large). "Small" (<1h), "Medium" (1-4h), "Large" (>4h).
-     - "dueDate": Convert distinct dates (e.g., "next friday", "tomorrow") to YYYY-MM-DD format. If no date, use null.
-  3. Output strictly valid JSON array. PROHIBITED: Markdown blocks, "Here is the json", etc.
+  EXTRACT THESE FIELDS:
+  - "title": Concise, action-oriented title (required)
+  - "category": Category like "Work", "Health", "Personal", "Learning", etc. Default: "General"
+  - "dueDate": Date in YYYY-MM-DD format. "Monday" = next Monday. "tomorrow" = ${tomorrow}. Default: ${today}
+  - "startTime": Start time in HH:MM (24h) format. "2pm" = "14:00", "9:30am" = "09:30". Default: null
+  - "endTime": End time in HH:MM (24h) format. Default: null
+  - "description": Brief description if mentioned. Default: ""
+  - "notes": Any additional details or notes. Default: ""
 
-  OUTPUT FORMAT:
-  [
-      {
-          "title": "Fix login bug",
-          "priority": "High",
-          "effort": "Medium",
-          "dueDate": "2024-10-15",
-          "description": "Auth token is expiring too early."
-      }
-  ]
+  EXAMPLES:
+  Input: "Schedule gym tomorrow 6am to 7am in Health category"
+  Output: [{"title":"Gym","category":"Health","dueDate":"${tomorrow}","startTime":"06:00","endTime":"07:00","description":"","notes":""}]
+
+  Input: "Team meeting Monday 2pm-3pm about Q1 goals"
+  Output: [{"title":"Team Meeting","category":"Work","dueDate":"2026-02-02","startTime":"14:00","endTime":"15:00","description":"Discuss Q1 goals","notes":""}]
+
+  OUTPUT: Raw JSON array only. NO markdown. NO explanation.
   `;
 
   const response = await executeGroqCall([

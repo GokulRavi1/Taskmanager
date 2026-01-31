@@ -72,6 +72,41 @@ export async function POST(req: NextRequest) {
             body.date = new Date(body.date);
         }
 
+        // Smart auto-scheduling: If autoSchedule is true and no time is set
+        if (body.autoSchedule && !body.startTime) {
+            try {
+                // Dynamically import to avoid circular dependencies
+                const { findSlotByKeywords, DEFAULT_SCHEDULE_SLOTS } = await import('@/lib/smartScheduler');
+                const Schedule = (await import('@/models/Schedule')).default;
+
+                // Get user's schedule or use default
+                let schedule = await Schedule.findOne({ isDefault: true }).lean();
+                const slots = schedule?.slots || DEFAULT_SCHEDULE_SLOTS;
+
+                // Try keyword matching first (zero LLM cost)
+                const match = findSlotByKeywords(
+                    `${body.title} ${body.description || ''} ${body.notes || ''}`,
+                    slots
+                );
+
+                if (match) {
+                    body.startTime = match.slot.startTime;
+                    body.endTime = match.slot.endTime;
+                    body.category = body.category || match.slot.category;
+                    body._scheduleMatch = {
+                        method: 'keyword',
+                        keyword: match.matchedKeyword,
+                        confidence: match.confidence,
+                    };
+                }
+            } catch (scheduleError) {
+                console.warn("Auto-scheduling failed, creating task without time:", scheduleError);
+            }
+        }
+
+        // Remove autoSchedule flag before saving
+        delete body.autoSchedule;
+
         const task = await Task.create(body);
         return NextResponse.json(task, { status: 201 });
     } catch (error) {

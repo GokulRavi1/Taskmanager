@@ -26,6 +26,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const { id } = await params; // Await params for Next.js 15
         const body = await req.json();
 
+        // If marking as complete, set completedAt timestamp
+        if (body.isCompleted === true) {
+            // Check if it wasn't already completed
+            const existingTask = await Task.findById(id).lean();
+            if (existingTask && !existingTask.isCompleted) {
+                body.completedAt = new Date();
+            }
+        } else if (body.isCompleted === false) {
+            // If un-completing, clear the completedAt
+            body.completedAt = null;
+        }
+
         const updatedTask = await Task.findByIdAndUpdate(id, body, {
             new: true,
             runValidators: true,

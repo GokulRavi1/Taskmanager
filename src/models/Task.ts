@@ -9,6 +9,7 @@ export interface ITask extends Document {
     title: string;
     description?: string;
     isCompleted: boolean;
+    completedAt?: Date;       // When the task was marked complete
     date: Date;
     startTime?: string;
     endTime?: string;
@@ -29,6 +30,7 @@ const TaskSchema = new Schema<ITask>(
         title: { type: String, required: [true, 'Please provide a title for this task.'] },
         description: { type: String },
         isCompleted: { type: Boolean, default: false },
+        completedAt: { type: Date },  // Timestamp when task was completed
         date: { type: Date, required: true, default: Date.now },
         startTime: { type: String },
         endTime: { type: String },
@@ -42,3 +44,4 @@ const TaskSchema = new Schema<ITask>(
 const Task: Model<ITask> = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);
 
 export default Task;
+

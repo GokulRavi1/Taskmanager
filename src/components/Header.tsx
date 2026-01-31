@@ -30,6 +30,9 @@ export function Header() {
                         <Link href="/" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/" ? "text-foreground" : "text-muted-foreground")}>
                             Dashboard
                         </Link>
+                        <Link href="/schedule" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/schedule" ? "text-foreground" : "text-muted-foreground")}>
+                            Schedule
+                        </Link>
                         <Link href="/analytics" className={cn("text-sm font-medium transition-colors hover:text-primary", pathname === "/analytics" ? "text-foreground" : "text-muted-foreground")}>
                             Analytics
                         </Link>
