@@ -18,7 +18,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Public auth API routes should be accessible always, but pages should redirect if logged in
-    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
+    const isAuthPage = pathname.startsWith('/login'); // || pathname.startsWith('/signup');
     const isApiAuthRoute = pathname.startsWith('/api/auth');
 
     // Verify token

@@ -13,7 +13,7 @@ export function Header() {
     const pathname = usePathname();
 
     // Hide header content on auth pages for a cleaner look, or keep it minimal
-    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
+    const isAuthPage = pathname.startsWith('/login'); // || pathname.startsWith('/signup');
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
