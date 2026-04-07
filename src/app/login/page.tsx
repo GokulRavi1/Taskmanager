@@ -101,12 +101,13 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                <div className="text-center text-sm text-muted-foreground">
+                {/* Signup link disabled — login only */}
+                {/* <div className="text-center text-sm text-muted-foreground">
                     Don't have an account?{' '}
                     <Link href="/signup" className="text-primary hover:underline font-medium hover:text-primary/80 transition-colors">
                         Create one
                     </Link>
-                </div>
+                </div> */}
             </div>
         </div>
     );
